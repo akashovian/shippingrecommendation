@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profit & Shipping Recommendation Tool</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f1f3f6;
+      color: #333;
+      padding: 2rem;
+      max-width: 1000px;
+      margin: auto;
+    }
+    h2, h3 {
+      text-align: center;
+      color: #222;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 1.2rem;
+      display: block;
+      font-size: 1.1rem;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 0.75rem;
+      margin-top: 0.4rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #28a745;
+      color: white;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      margin-top: 1.5rem;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    #result, #ratecard {
+      background: #fff;
+      margin-top: 2rem;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.05);
+    }
+    p { margin: 0.5rem 0; font-size: 1rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: center; }
+    th { background-color: #e2e6ea; }
+    .recommended { background-color: #d4edda; font-weight: bold; }
+    footer { text-align: center; font-size: 0.9rem; color: #666; margin-top: 2rem; }
+  </style>
+</head>
+<body>
+  <h2>Shipping Rate Categories</h2>
+  <div id="ratecard">
+    <table>
+      <tr><th>Category</th><th>B2C Priority (0.5kg)</th><th>+0.5kg</th><th>+1kg >5kg</th><th>B2C Smart (0.5kg)</th><th>+0.5kg</th><th>+1kg >5kg</th></tr>
+      <tr><td>City (Bangalore)</td><td>49</td><td>22</td><td>32</td><td>40</td><td>21</td><td>29</td></tr>
+      <tr><td>Region (Rest of Karnataka)</td><td>56</td><td>28</td><td>38</td><td>46</td><td>25</td><td>32</td></tr>
+      <tr><td>Zone (TN, AP, TG, KL)</td><td>61</td><td>36</td><td>59</td><td>53</td><td>30</td><td>39</td></tr>
+      <tr><td>ROI-A (North, West, Central)</td><td>91</td><td>71.5</td><td>131</td><td>68</td><td>47.5</td><td>58.5</td></tr>
+      <tr><td>ROI-B (East)</td><td>95</td><td>75</td><td>140</td><td>74</td><td>54</td><td>71</td></tr>
+      <tr><td>Special Destinations</td><td>112</td><td>91</td><td>158</td><td>81</td><td>61</td><td>85</td></tr>
+    </table>
+  </div>
+
+  <h2>Shipping Recommendation</h2>
+  <label>Total Order Value (incl. GST):
+    <input type="number" id="orderValue" step="0.01" required />
+  </label>
+  <label>Total Order Weight (g):
+    <input type="number" id="orderWeight" step="1" required />
+  </label>
+  <label>Destination State/Region:
+    <select id="state"></select>
+  </label>
+  <button onclick="calculate()">Calculate</button>
+  <div id="result"></div>
+
+  <footer>Developed by Akash Justin Ovian</footer>
+
+  <script>
+    const b2c_priority = {
+      "Karnataka-Bangalore": [49, 22, 32], "Karnataka-Other": [56, 28, 38],
+      "Tamil Nadu": [61, 36, 59], "Telangana": [61, 36, 59], "Kerala": [61, 36, 59], "Andhra Pradesh": [61, 36, 59],
+      "Delhi": [91, 71.5, 131], "Goa": [91, 71.5, 131], "Maharashtra": [91, 71.5, 131], "Gujarat": [91, 71.5, 131], "Madhya Pradesh": [91, 71.5, 131],
+      "Uttar Pradesh": [91, 71.5, 131], "Himachal Pradesh": [91, 71.5, 131], "Uttarakhand": [91, 71.5, 131], "Rajasthan": [91, 71.5, 131],
+      "Haryana": [91, 71.5, 131], "Punjab": [91, 71.5, 131], "Chhattisgarh": [91, 71.5, 131], "Chandigarh": [91, 71.5, 131],
+      "West Bengal": [95, 75, 140], "Bihar": [95, 75, 140], "Odisha": [95, 75, 140], "Jharkhand": [95, 75, 140],
+      "Andaman & Nicobar": [112, 91, 158], "Jammu & Kashmir": [112, 91, 158], "Assam": [112, 91, 158],
+      "Manipur": [112, 91, 158], "Mizoram": [112, 91, 158], "Nagaland": [112, 91, 158],
+      "Arunachal Pradesh": [112, 91, 158], "North Eastern States": [112, 91, 158], "Ladakh": [112, 91, 158]
+    };
+
+    const b2c_smart = {
+      "Karnataka-Bangalore": [40, 21, 29], "Karnataka-Other": [46, 25, 32],
+      "Tamil Nadu": [53, 30, 39], "Telangana": [53, 30, 39], "Kerala": [53, 30, 39], "Andhra Pradesh": [53, 30, 39],
+      "Delhi": [68, 47.5, 58.5], "Goa": [68, 47.5, 58.5], "Maharashtra": [68, 47.5, 58.5], "Gujarat": [68, 47.5, 58.5], "Madhya Pradesh": [68, 47.5, 58.5],
+      "Uttar Pradesh": [68, 47.5, 58.5], "Himachal Pradesh": [68, 47.5, 58.5], "Uttarakhand": [68, 47.5, 58.5], "Rajasthan": [68, 47.5, 58.5],
+      "Haryana": [68, 47.5, 58.5], "Punjab": [68, 47.5, 58.5], "Chhattisgarh": [68, 47.5, 58.5], "Chandigarh": [68, 47.5, 58.5],
+      "West Bengal": [74, 54, 71], "Bihar": [74, 54, 71], "Odisha": [74, 54, 71], "Jharkhand": [74, 54, 71],
+      "Andaman & Nicobar": [81, 61, 85], "Jammu & Kashmir": [81, 61, 85], "Assam": [81, 61, 85],
+      "Manipur": [81, 61, 85], "Mizoram": [81, 61, 85], "Nagaland": [81, 61, 85],
+      "Arunachal Pradesh": [81, 61, 85], "North Eastern States": [81, 61, 85], "Ladakh": [81, 61, 85]
+    };
+
+    const noPriorityStates = ["Karnataka-Bangalore", "Karnataka-Other"];
+
+    window.onload = function () {
+      const stateSelect = document.getElementById('state');
+      for (const state in b2c_priority) {
+        stateSelect.innerHTML += `<option value="${state}">${state}</option>`;
+      }
+    };
+
+    function calculate() {
+      const orderValue = parseFloat(document.getElementById('orderValue').value);
+      const orderWeight = parseFloat(document.getElementById('orderWeight').value);
+      const state = document.getElementById('state').value;
+
+      if (!state || !(state in b2c_priority) || !(state in b2c_smart)) {
+        document.getElementById("result").innerHTML = `<p style='color:red;'>Invalid or unsupported state selected. Please choose a valid destination.</p>`;
+        return;
+      }
+
+      const priceExGST = orderValue / 1.05;
+      const rawMaterial = 0.5 * priceExGST;
+      const overhead = Math.ceil(orderWeight / 250) * 50;
+      const baseCost = overhead + rawMaterial;
+
+      const num_500gm = Math.ceil(orderWeight / 500);
+      let ship_priority, ship_smart;
+
+      if (orderWeight <= 500) {
+        ship_priority = b2c_priority[state][0];
+        ship_smart = b2c_smart[state][0];
+      } else if (orderWeight > 5000) {
+        const extraKg = Math.ceil((orderWeight - 5000) / 1000);
+        ship_priority = b2c_priority[state][0] + b2c_priority[state][1] * 9 + b2c_priority[state][2] * extraKg;
+        ship_smart = b2c_smart[state][0] + b2c_smart[state][1] * 9 + b2c_smart[state][2] * extraKg;
+      } else {
+        const add = num_500gm - 1;
+        ship_priority = b2c_priority[state][0] + b2c_priority[state][1] * add;
+        ship_smart = b2c_smart[state][0] + b2c_smart[state][1] * add;
+      }
+
+      const totalCostPriority = baseCost + ship_priority;
+      const totalCostSmart = baseCost + ship_smart;
+      const profitPriority = priceExGST - totalCostPriority;
+      const profitSmart = priceExGST - totalCostSmart;
+      const marginPriority = (profitPriority / totalCostPriority) * 100;
+      const marginSmart = (profitSmart / totalCostSmart) * 100;
+
+      let preferred = '', priorityClass = '', smartClass = '';
+      if (!noPriorityStates.includes(state) && marginPriority >= 40) {
+        preferred = 'priority';
+        priorityClass = 'recommended';
+      } else if (marginSmart >= 40) {
+        preferred = 'smart';
+        smartClass = 'recommended';
+      } else {
+        preferred = 'smart';
+        smartClass = 'recommended';
+      }
+
+      document.getElementById("result").innerHTML = `
+        <h3>Shipping Summary</h3>
+        <p>Overhead Cost: ₹${overhead.toFixed(2)}</p>
+        <p>Raw Material Cost: ₹${rawMaterial.toFixed(2)}</p>
+        <table>
+          <tr><th>Method</th><th>Shipping</th><th>Profit</th><th>Margin</th></tr>
+          <tr class="${priorityClass}"><td>B2C Priority</td><td>₹${ship_priority}</td><td>₹${profitPriority.toFixed(1)}</td><td>${marginPriority.toFixed(1)}%</td></tr>
+          <tr class="${smartClass}"><td>B2C Smart</td><td>₹${ship_smart}</td><td>₹${profitSmart.toFixed(1)}</td><td>${marginSmart.toFixed(1)}%</td></tr>
+        </table>
+        <p><b>Recommended Method: ${preferred === 'priority' ? 'B2C Priority' : 'B2C Smart'}</b></p>
+      `;
+    }
+  </script>
+</body>
+</html>
