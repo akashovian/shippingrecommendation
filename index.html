@@ -66,6 +66,7 @@
       <tr><td>City (Bangalore)</td><td>49</td><td>22</td><td>32</td><td>40</td><td>21</td><td>29</td></tr>
       <tr><td>Region (Rest of Karnataka)</td><td>56</td><td>28</td><td>38</td><td>46</td><td>25</td><td>32</td></tr>
       <tr><td>Zone (TN, AP, TG, KL)</td><td>61</td><td>36</td><td>59</td><td>53</td><td>30</td><td>39</td></tr>
+      <tr><td>Metro Cities</td><td>88</td><td>67</td><td>120</td><td>61</td><td>42</td><td>46</td></tr>
       <tr><td>ROI-A (North, West, Central)</td><td>91</td><td>71.5</td><td>131</td><td>68</td><td>47.5</td><td>58.5</td></tr>
       <tr><td>ROI-B (East)</td><td>95</td><td>75</td><td>140</td><td>74</td><td>54</td><td>71</td></tr>
       <tr><td>Special Destinations</td><td>112</td><td>91</td><td>158</td><td>81</td><td>61</td><td>85</td></tr>
@@ -88,10 +89,13 @@
   <footer>Developed by Akash Justin Ovian</footer>
 
   <script>
+    const metroCities = ["Mumbai", "Delhi", "Kolkata", "Chennai", "Hyderabad", "Pune"];
+
     const b2c_priority = {
       "Karnataka-Bangalore": [49, 22, 32], "Karnataka-Other": [56, 28, 38],
       "Tamil Nadu": [61, 36, 59], "Telangana": [61, 36, 59], "Kerala": [61, 36, 59], "Andhra Pradesh": [61, 36, 59],
-      "Delhi": [91, 71.5, 131], "Goa": [91, 71.5, 131], "Maharashtra": [91, 71.5, 131], "Gujarat": [91, 71.5, 131], "Madhya Pradesh": [91, 71.5, 131],
+      "Metro": [88, 67, 120],
+      "Goa": [91, 71.5, 131], "Maharashtra": [91, 71.5, 131], "Gujarat": [91, 71.5, 131], "Madhya Pradesh": [91, 71.5, 131],
       "Uttar Pradesh": [91, 71.5, 131], "Himachal Pradesh": [91, 71.5, 131], "Uttarakhand": [91, 71.5, 131], "Rajasthan": [91, 71.5, 131],
       "Haryana": [91, 71.5, 131], "Punjab": [91, 71.5, 131], "Chhattisgarh": [91, 71.5, 131], "Chandigarh": [91, 71.5, 131],
       "West Bengal": [95, 75, 140], "Bihar": [95, 75, 140], "Odisha": [95, 75, 140], "Jharkhand": [95, 75, 140],
@@ -103,7 +107,8 @@
     const b2c_smart = {
       "Karnataka-Bangalore": [40, 21, 29], "Karnataka-Other": [46, 25, 32],
       "Tamil Nadu": [53, 30, 39], "Telangana": [53, 30, 39], "Kerala": [53, 30, 39], "Andhra Pradesh": [53, 30, 39],
-      "Delhi": [68, 47.5, 58.5], "Goa": [68, 47.5, 58.5], "Maharashtra": [68, 47.5, 58.5], "Gujarat": [68, 47.5, 58.5], "Madhya Pradesh": [68, 47.5, 58.5],
+      "Metro": [61, 42, 46],
+      "Goa": [68, 47.5, 58.5], "Maharashtra": [68, 47.5, 58.5], "Gujarat": [68, 47.5, 58.5], "Madhya Pradesh": [68, 47.5, 58.5],
       "Uttar Pradesh": [68, 47.5, 58.5], "Himachal Pradesh": [68, 47.5, 58.5], "Uttarakhand": [68, 47.5, 58.5], "Rajasthan": [68, 47.5, 58.5],
       "Haryana": [68, 47.5, 58.5], "Punjab": [68, 47.5, 58.5], "Chhattisgarh": [68, 47.5, 58.5], "Chandigarh": [68, 47.5, 58.5],
       "West Bengal": [74, 54, 71], "Bihar": [74, 54, 71], "Odisha": [74, 54, 71], "Jharkhand": [74, 54, 71],
@@ -116,8 +121,12 @@
 
     window.onload = function () {
       const stateSelect = document.getElementById('state');
-      for (const state in b2c_priority) {
+      const allStates = Object.keys(b2c_priority);
+      for (const state of allStates) {
         stateSelect.innerHTML += `<option value="${state}">${state}</option>`;
+      }
+      for (const metro of metroCities) {
+        stateSelect.innerHTML += `<option value="Metro">${metro}</option>`;
       }
     };
 
@@ -156,14 +165,14 @@
       const totalCostSmart = baseCost + ship_smart;
       const profitPriority = priceExGST - totalCostPriority;
       const profitSmart = priceExGST - totalCostSmart;
-      const marginPriority = (profitPriority / totalCostPriority) * 100;
-      const marginSmart = (profitSmart / totalCostSmart) * 100;
+      const marginPriority = (profitPriority / priceExGST) * 100;
+      const marginSmart = (profitSmart / priceExGST) * 100;
 
       let preferred = '', priorityClass = '', smartClass = '';
-      if (!noPriorityStates.includes(state) && marginPriority >= 40) {
+      if (!noPriorityStates.includes(state) && marginPriority >= 30) {
         preferred = 'priority';
         priorityClass = 'recommended';
-      } else if (marginSmart >= 40) {
+      } else if (marginSmart >= 30) {
         preferred = 'smart';
         smartClass = 'recommended';
       } else {
@@ -173,8 +182,8 @@
 
       document.getElementById("result").innerHTML = `
         <h3>Shipping Summary</h3>
-        <p>Overhead Cost: ₹${overhead.toFixed(2)}</p>
-        <p>Raw Material Cost: ₹${rawMaterial.toFixed(2)}</p>
+        <p><strong>Total Raw Material Cost:</strong> ₹${rawMaterial.toFixed(2)}</p>
+        <p><strong>Total Overhead Cost:</strong> ₹${overhead.toFixed(2)}</p>
         <table>
           <tr><th>Method</th><th>Shipping</th><th>Profit</th><th>Margin</th></tr>
           <tr class="${priorityClass}"><td>B2C Priority</td><td>₹${ship_priority}</td><td>₹${profitPriority.toFixed(1)}</td><td>${marginPriority.toFixed(1)}%</td></tr>
